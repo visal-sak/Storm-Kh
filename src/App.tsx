@@ -1,10 +1,11 @@
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import {
   CloudRain,
   CloudRainWind,
   Crosshair,
   Gauge,
   MapPin,
+  PanelRightOpen,
   RefreshCw,
   Sun,
   Waves,
@@ -17,12 +18,14 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Switch } from "@/components/ui/switch"
 import { AnimatedThemeToggle } from "@/components/ui/animated-theme-toggle"
+import { Sheet } from "@/components/ui/sheet"
 import { StormMap } from "@/components/StormMap"
 import { CycloneAlertBanner } from "@/components/CycloneAlertBanner"
 import { CycloneHistory } from "@/components/CycloneHistory"
 import { HourlyToday } from "@/components/HourlyToday"
 import { cn } from "@/lib/utils"
 import { useGeolocation } from "@/lib/geolocation"
+import { useIsDesktop } from "@/lib/media"
 import { formatSince, useNow, usePolling } from "@/lib/polling"
 import { PROVINCES } from "@/lib/provinces"
 import { cycloneAlert } from "@/lib/alert"
@@ -72,6 +75,8 @@ export default function App() {
   const [trackError, setTrackError] = useState<string | null>(null)
   const { location, status: locateStatus, error: locateError, locate } = useGeolocation()
   const now = useNow()
+  const isDesktop = useIsDesktop()
+  const [railOpen, setRailOpen] = useState(false)
 
   const loadWeather = useCallback(async () => {
     setLoading(true)
@@ -168,11 +173,18 @@ export default function App() {
     )
   }, [simulation, cityRisks, liveStorm, replayStorm])
 
+  // Rotating to landscape docks the rail, so a sheet left open would otherwise
+  // reappear the next time the viewport narrows.
+  useEffect(() => {
+    if (isDesktop) setRailOpen(false)
+  }, [isDesktop])
+
   // Picking a storm from the history implies wanting to see it, so replay turns
-  // itself on rather than leaving the reader to find the toggle.
+  // itself on and — on a phone — the sheet steps out of the map's way.
   const selectHistoric = useCallback((cyclone: Cyclone) => {
     setSelectedId(cyclone.id)
     setSimulation(true)
+    setRailOpen(false)
   }, [])
 
   // Alerts speak about the live system only — a replayed track must never
@@ -211,70 +223,13 @@ export default function App() {
     return { ...nearest, risk }
   }, [location, cityRisks])
 
-  return (
-    <div className="flex h-full flex-col">
-      {/* ── Top bar ── */}
-      <header className="flex flex-wrap items-center gap-3 border-b border-storm-700/60 bg-storm-900/60 px-5 py-3 backdrop-blur">
-        <div>
-          <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-rain">
-            <span className="font-khmer">ប្រព័ន្ធតាមដានព្យុះ</span> · cyclone monitor
-          </p>
-          <h1 className="text-lg leading-tight font-bold tracking-tight">
-            StormWatch <span className="text-rain">Kampuchea</span>
-          </h1>
-        </div>
-
-        <div className="ml-auto flex items-center gap-3">
-          <OverallChip level={overall.level} labelEn={overall.labelEn} labelKm={overall.labelKm} />
-          <div className="hidden items-center gap-2 sm:flex">
-            <Switch
-              checked={simulation}
-              onCheckedChange={setSimulation}
-              label="Replay the most recent cyclone in the region"
-            />
-            <span className="text-xs text-storm-300">Replay</span>
-          </div>
-          <AnimatedThemeToggle />
-          <Button variant="outline" onClick={load} disabled={loading} aria-label="Refresh data">
-            <RefreshCw className={loading ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
-            <span className="hidden md:inline">{loading ? "Updating…" : "Refresh"}</span>
-          </Button>
-        </div>
-      </header>
-
-      {/* ── Main ── */}
-      <main className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[1fr_360px]">
-        {/* Map */}
-        <section className="relative min-h-[420px]" aria-label="Storm map">
-          <StormMap
-            cityWeather={provinceWeather}
-            cityRisks={riskById}
-            sentinelWeather={sentinelWeather}
-            storm={storm}
-            simulation={simulation}
-            userLocation={location}
-            locating={locateStatus === "locating"}
-            onLocate={locate}
-            focus={focus}
-          />
-          <div className="pointer-events-none absolute bottom-3 left-3 rounded-lg border border-storm-700/60 bg-storm-950/80 px-3 py-2 text-[11px] text-storm-300 backdrop-blur">
-            <p className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-safe" /> city ok
-              <span className="ml-2 h-2 w-2 rounded-full bg-watch" /> watch
-              <span className="ml-2 h-2 w-2 rounded-full bg-danger" /> warning
-              <span className="ml-3 inline-block h-2 w-2 rotate-45 border border-rain/70 bg-rain/20" />{" "}
-              offshore sentinel
-              <CloudRain className="ml-3 h-3 w-3 text-rain" /> rain
-              <Zap className="ml-2 h-3 w-3 text-watch" /> thunder
-              <span className="ml-3 h-2 w-2 rounded-full border-2 border-storm-950 bg-rain" /> you
-            </p>
-          </div>
-        </section>
-
-        {/* Side rail */}
-        <aside className="flex min-h-0 flex-col gap-3 overflow-y-auto border-t border-storm-700/60 p-4 lg:border-t-0 lg:border-l">
-          {/* Khmer-first cyclone alert, above everything it would affect */}
-          <CycloneAlertBanner alert={alert} />
+  // The rail is built once and rendered into exactly one place: docked beside
+  // the map on desktop, or inside a sheet below `lg`. Stacking it under the map
+  // on a phone buried the map under a metre of scrolling.
+  const rail = (
+    <>
+      {/* Khmer-first cyclone alert, above everything it would affect */}
+      <CycloneAlertBanner alert={alert} />
 
           {/* Status */}
           <Card>
@@ -588,13 +543,178 @@ export default function App() {
             </div>
           </div>
 
-          <p className="mt-auto pt-2 text-[11px] leading-relaxed text-storm-500">
-            Live data: Open-Meteo (updates ~every 15 min). This dashboard is educational — for real
-            emergencies follow the Ministry of Water Resources and Meteorology (MOWRAM) and NCDM
-            bulletins.
+      <p className="mt-auto pt-2 text-[11px] leading-relaxed text-storm-500">
+        Live data: Open-Meteo and NASA EONET. This dashboard is educational — for real
+        emergencies follow the Ministry of Water Resources and Meteorology (MOWRAM) and NCDM
+        bulletins.
+      </p>
+    </>
+  )
+
+  return (
+    <div className="flex h-full min-w-0 flex-col">
+      {/* ── Top bar ── */}
+      <header className="flex shrink-0 items-center gap-2 border-b border-storm-700/60 bg-storm-900/60 px-3 py-2.5 backdrop-blur sm:gap-3 sm:px-5 sm:py-3">
+        <div className="min-w-0">
+          {/* The kicker is the first thing worth losing on a narrow screen */}
+          <p className="hidden text-[11px] font-medium uppercase tracking-[0.2em] text-rain sm:block">
+            <span className="font-khmer">ប្រព័ន្ធតាមដានព្យុះ</span> · cyclone monitor
           </p>
-        </aside>
+          <h1 className="truncate text-base leading-tight font-bold tracking-tight sm:text-lg">
+            StormWatch <span className="text-rain">Kampuchea</span>
+          </h1>
+        </div>
+
+        <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-3">
+          {/* Full chip needs room; below sm the status shows on the map bar instead */}
+          <div className="hidden md:block">
+            <OverallChip
+              level={overall.level}
+              labelEn={overall.labelEn}
+              labelKm={overall.labelKm}
+            />
+          </div>
+          <div className="hidden items-center gap-2 lg:flex">
+            <Switch
+              checked={simulation}
+              onCheckedChange={setSimulation}
+              label="Replay the most recent cyclone in the region"
+            />
+            <span className="text-xs text-storm-300">Replay</span>
+          </div>
+          <AnimatedThemeToggle />
+          <Button
+            variant="outline"
+            onClick={load}
+            disabled={loading}
+            aria-label="Refresh data"
+            className="w-9 px-0 md:w-auto md:px-3.5"
+          >
+            <RefreshCw className={loading ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
+            <span className="hidden md:inline">{loading ? "Updating…" : "Refresh"}</span>
+          </Button>
+        </div>
+      </header>
+
+      {/* ── Main ── */}
+      <main className="grid min-h-0 min-w-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px]">
+        {/* Map — takes the whole viewport below lg, where the rail is a sheet */}
+        <section className="relative min-h-0 min-w-0" aria-label="Storm map">
+          <StormMap
+            cityWeather={provinceWeather}
+            cityRisks={riskById}
+            sentinelWeather={sentinelWeather}
+            storm={storm}
+            simulation={simulation}
+            userLocation={location}
+            locating={locateStatus === "locating"}
+            onLocate={locate}
+            focus={focus}
+          />
+
+          {/* Legend. It used to wrap into an unreadable block on a phone, so it
+              scrolls sideways instead and clears the sheet trigger. */}
+          <div className="absolute right-2 bottom-14 left-2 rounded-lg border border-storm-700/60 bg-storm-950/85 backdrop-blur lg:right-auto lg:bottom-3 lg:left-3">
+            <div className="overflow-x-auto">
+              <p className="flex w-max items-center gap-3 px-3 py-2 text-[11px] whitespace-nowrap text-storm-300">
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-safe" /> ok
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-watch" /> watch
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-danger" /> warning
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="inline-block h-2 w-2 rotate-45 border border-rain/70 bg-rain/20" />{" "}
+                  sentinel
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <CloudRain className="h-3 w-3 text-rain" /> rain
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Zap className="h-3 w-3 text-watch" /> thunder
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full border-2 border-storm-950 bg-rain" /> you
+                </span>
+              </p>
+            </div>
+          </div>
+
+          {/* Below lg the rail lives in a sheet, so the map keeps the viewport
+              and the status stays visible on a persistent bar. */}
+          {!isDesktop && (
+            <div className="absolute inset-x-0 bottom-0 flex items-center gap-2 border-t border-storm-700/60 bg-storm-900/90 px-3 py-2 backdrop-blur">
+              <button
+                type="button"
+                onClick={() => setRailOpen(true)}
+                className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-left"
+                aria-label="Open dashboard details"
+              >
+                <span
+                  className={cn(
+                    "sw-live-dot h-2 w-2 shrink-0 rounded-full",
+                    overall.level === "warning"
+                      ? "bg-danger"
+                      : overall.level === "watch"
+                        ? "bg-watch"
+                        : "bg-safe"
+                  )}
+                />
+                <span className="min-w-0">
+                  <span className="block truncate text-xs font-semibold text-storm-100">
+                    {overall.labelEn}
+                  </span>
+                  <span className="font-khmer block truncate text-[11px] text-storm-300">
+                    {overall.labelKm}
+                  </span>
+                </span>
+              </button>
+              <Button
+                variant="outline"
+                onClick={() => setRailOpen(true)}
+                className="h-8 shrink-0 px-3 text-xs"
+              >
+                <PanelRightOpen className="h-3.5 w-3.5" />
+                Details
+              </Button>
+            </div>
+          )}
+        </section>
+
+        {/* Docked rail, desktop only */}
+        {isDesktop && (
+          <aside className="flex min-h-0 min-w-0 flex-col gap-3 overflow-y-auto border-l border-storm-700/60 p-4">
+            {rail}
+          </aside>
+        )}
       </main>
+
+      {/* Same rail, in a sheet, below lg */}
+      {!isDesktop && (
+        <Sheet
+          open={railOpen}
+          onClose={() => setRailOpen(false)}
+          title={overall.labelEn}
+          subtitle={overall.labelKm}
+        >
+          {/* Replay lives here below lg — there is no room for it in the header */}
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-storm-700/60 bg-storm-800/40 px-3 py-2">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-storm-100">Replay last storm</p>
+              <p className="font-khmer text-[11px] text-storm-300">ចាក់ព្យុះចុងក្រោយឡើងវិញ</p>
+            </div>
+            <Switch
+              checked={simulation}
+              onCheckedChange={setSimulation}
+              label="Replay the most recent cyclone in the region"
+            />
+          </div>
+          {rail}
+        </Sheet>
+      )}
     </div>
   )
 }
