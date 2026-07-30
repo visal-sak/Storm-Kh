@@ -1,0 +1,269 @@
+@import "tailwindcss";
+
+/* Theme is driven by a class on <html>, not the OS preference, because the app
+   ships light-first and the user's choice has to win. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ── StormWatch Kampuchea design tokens ──────────────────────────
+   `storm-*` is a role ladder rather than a fixed palette:
+     950 page · 900 panel · 800 raised · 700 border
+     500 muted text · 300 secondary text · 100 primary text
+   Both themes fill the same ladder, so every existing utility keeps
+   its meaning and flips automatically. Risk colors follow
+   international storm-warning conventions and are re-tuned per theme
+   to hold contrast on white as well as on the night-sky background. */
+@theme {
+  --color-storm-950: var(--sw-page);
+  --color-storm-900: var(--sw-panel);
+  --color-storm-800: var(--sw-raised);
+  --color-storm-700: var(--sw-border);
+  --color-storm-500: var(--sw-muted);
+  --color-storm-300: var(--sw-secondary);
+  --color-storm-100: var(--sw-primary);
+  --color-rain: var(--sw-rain);
+  --color-track: var(--sw-track);
+  --color-safe: var(--sw-safe);
+  --color-watch: var(--sw-watch);
+  --color-danger: var(--sw-danger);
+
+  /* Aliases the vendored map primitives reference by shadcn-style names */
+  --color-background: var(--sw-panel);
+  --color-foreground: var(--sw-primary);
+  --color-border: var(--sw-border);
+  --color-accent: var(--sw-raised);
+  --color-muted: var(--sw-page);
+  --color-muted-foreground: var(--sw-muted);
+  --color-popover: var(--sw-popup);
+  --color-popover-foreground: var(--sw-popup-fg);
+  --color-destructive: var(--sw-danger);
+  --color-primary: var(--sw-rain);
+  --color-ring: var(--sw-rain);
+
+  --font-sans: "Geist", "Kantumruy Pro", system-ui, sans-serif;
+  --font-mono: "Geist Mono", "Kantumruy Pro", ui-monospace, monospace;
+  --font-khmer: "Kantumruy Pro", "Geist", system-ui, sans-serif;
+}
+
+/* Daylight: paper-white panels over a cool overcast page. */
+:root {
+  color-scheme: light;
+  --sw-page: #f3f6fb;
+  --sw-panel: #ffffff;
+  --sw-raised: #eaf0f8;
+  --sw-border: #d3dcea;
+  --sw-muted: #64789a;
+  --sw-secondary: #42577a;
+  --sw-primary: #0c1728;
+  --sw-rain: #1a7fb5;
+  --sw-safe: #17855a;
+  --sw-watch: #9a6410;
+  --sw-danger: #c53a24;
+  --sw-elevation: 0 1px 2px rgb(12 23 40 / 0.06), 0 10px 28px -18px rgb(12 23 40 / 0.35);
+
+  /* Switch track when off — a light neutral, so the white thumb reads as
+     raised rather than as another shade of the app's blue-grays. */
+  --sw-track: #e2e5e9;
+
+  /* Map tooltips run their own high-contrast surface: white here, black in
+     dark mode, so they read against either basemap. */
+  --sw-popup: #ffffff;
+  --sw-popup-fg: #0c1728;
+  --sw-popup-muted: #42577a;
+  --sw-popup-border: #d3dcea;
+}
+
+/* Pre-monsoon night sky over the Gulf of Thailand. */
+.dark {
+  color-scheme: dark;
+  --sw-page: #0a111e;
+  --sw-panel: #101a2c;
+  --sw-raised: #16233a;
+  --sw-border: #24344e;
+  --sw-muted: #48608a;
+  --sw-secondary: #93a7c8;
+  --sw-primary: #e7eefb;
+  --sw-rain: #62b2dd;
+  --sw-safe: #4fb583;
+  --sw-watch: #e8b23c;
+  --sw-danger: #ee5c46;
+  --sw-elevation: 0 1px 2px rgb(0 0 0 / 0.45);
+
+  /* Same role at night: light enough to separate from the panel behind it,
+     dark enough that the white thumb still carries the "on" signal. */
+  --sw-track: #333c4c;
+
+  /* Black card, white type. The dark-matter basemap is itself near-black, so
+     the hairline border and shadow are what keep the card's edge readable. */
+  --sw-popup: #08090c;
+  --sw-popup-fg: #ffffff;
+  --sw-popup-muted: #b9c6da;
+  --sw-popup-border: rgb(255 255 255 / 0.18);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background: var(--sw-page);
+  color: var(--sw-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Khmer needs a touch more leading than Geist's Latin defaults. */
+:lang(km),
+.font-khmer {
+  font-family: var(--font-khmer);
+  line-height: 1.7;
+}
+
+/* MapLibre chrome tuned to the theme */
+.maplibregl-ctrl-attrib {
+  background: color-mix(in oklab, var(--sw-page) 78%, transparent) !important;
+  color: var(--sw-muted) !important;
+  font-size: 10px;
+}
+.maplibregl-ctrl-attrib a {
+  color: var(--sw-secondary) !important;
+}
+/* The popup container is the tooltip surface — white in light, black in dark.
+   Marker tooltips render straight onto it.
+   maplibre-gl.css is injected after this sheet and squares one corner per
+   anchor, so the properties it also sets have to win outright. */
+.maplibregl-popup-content {
+  background: var(--sw-popup) !important;
+  color: var(--sw-popup-fg);
+  border: 1px solid var(--sw-popup-border);
+  border-radius: 12px !important;
+  box-shadow: var(--sw-elevation) !important;
+  font-family: var(--font-sans);
+  padding: 8px 10px !important;
+}
+/* Secondary lines inside a tooltip follow the card, not the page. */
+.maplibregl-popup-content .text-storm-300 {
+  color: var(--sw-popup-muted);
+}
+/* The tip is a CSS triangle, so it has to be filled with the card color for
+   whichever edge the popup is anchored to. */
+.maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
+.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
+.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip {
+  border-top-color: var(--sw-popup) !important;
+}
+.maplibregl-popup-anchor-top .maplibregl-popup-tip,
+.maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
+.maplibregl-popup-anchor-top-right .maplibregl-popup-tip {
+  border-bottom-color: var(--sw-popup) !important;
+}
+.maplibregl-popup-anchor-left .maplibregl-popup-tip {
+  border-right-color: var(--sw-popup) !important;
+}
+.maplibregl-popup-anchor-right .maplibregl-popup-tip {
+  border-left-color: var(--sw-popup) !important;
+}
+
+/* ── Toggle thumb (transitions.dev p27) ──────────────────────────
+   The thumb overshoots its target and settles back, so it needs keyframes
+   rather than a transition. `.is-init` gates them: without it the "off"
+   animation would fire on mount. Travel is derived from the track geometry
+   in switch.tsx — w-11 track (44px) minus a w-5 thumb (20px) and 2px insets. */
+:root {
+  --toggle-dur: 350ms;
+  --toggle-travel: 20px;
+  --toggle-ov1: 1px;
+  --toggle-ov2: 0px;
+  --toggle-track: 200ms;
+  --toggle-ease: cubic-bezier(0.34, 1.35, 0.64, 1);
+}
+
+.t-toggle {
+  transition: background var(--toggle-track) var(--toggle-ease);
+}
+.t-toggle-thumb {
+  translate: 0 0;
+  will-change: translate;
+}
+.t-toggle[data-on="true"] .t-toggle-thumb {
+  translate: var(--toggle-travel) 0;
+}
+.t-toggle.is-init[data-on="true"] .t-toggle-thumb {
+  animation: t-toggle-on var(--toggle-dur) var(--toggle-ease) both;
+}
+.t-toggle.is-init[data-on="false"] .t-toggle-thumb {
+  animation: t-toggle-off var(--toggle-dur) var(--toggle-ease) both;
+}
+@keyframes t-toggle-on {
+  0% {
+    translate: 0 0;
+  }
+  55% {
+    translate: calc(var(--toggle-travel) + var(--toggle-ov1)) 0;
+  }
+  80% {
+    translate: calc(var(--toggle-travel) - var(--toggle-ov2)) 0;
+  }
+  100% {
+    translate: var(--toggle-travel) 0;
+  }
+}
+@keyframes t-toggle-off {
+  0% {
+    translate: var(--toggle-travel) 0;
+  }
+  55% {
+    translate: calc(0px - var(--toggle-ov1)) 0;
+  }
+  80% {
+    translate: var(--toggle-ov2) 0;
+  }
+  100% {
+    translate: 0 0;
+  }
+}
+
+/* Live pulse dot */
+@keyframes sw-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--sw-safe) 60%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 8px color-mix(in oklab, var(--sw-safe) 0%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--sw-safe) 0%, transparent);
+  }
+}
+.sw-live-dot {
+  animation: sw-pulse 2s infinite;
+}
+
+/* "You are here" beacon */
+@keyframes sw-ping {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.7;
+  }
+  80%,
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+.sw-ping {
+  animation: sw-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sw-live-dot,
+  .sw-ping {
+    animation: none;
+  }
+  /* The thumb still needs to land in the right place, so the static
+     translate rule above keeps doing the work. */
+  .t-toggle-thumb {
+    animation: none !important;
+  }
+}
