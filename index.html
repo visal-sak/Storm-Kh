@@ -6,44 +6,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light dark" />
     <title>StormWatch Kampuchea - Cambodia Cyclone Monitor</title>
-    <meta
-      name="description"
-      content="Live tropical cyclone and weather monitor for Cambodia. All 25 provinces with real-time weather, air quality, rain and lightning on the map, real NASA EONET storm tracks, and Khmer-first alerts."
-    />
+    <meta name="description" content="Live cyclone and weather monitor for Cambodia — all 25 provinces, real NASA EONET storm tracks, and Khmer-first alerts." />
 
-    <!-- Link previews. og:image must be an absolute URL — crawlers do not
-         resolve relative paths, so a bare /strom.png silently yields no
-         thumbnail on Facebook, Telegram, Messenger, Slack or Discord. -->
+    <!-- Link previews. Two things matter here and both are easy to get wrong:
+         1. og:image must be an ABSOLUTE url. Crawlers do not resolve relative
+            paths, so a bare /strom.png silently yields no thumbnail at all.
+         2. Each meta stays on ONE line. Telegram and Facebook parse real HTML,
+            but plenty of scrapers match line by line and miss a wrapped tag. -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="StormWatch Kampuchea" />
     <meta property="og:url" content="https://strom-kh.netlify.app/" />
     <meta property="og:title" content="StormWatch Kampuchea · ប្រព័ន្ធតាមដានព្យុះ" />
-    <meta
-      property="og:description"
-      content="Live tropical cyclone and weather monitor for Cambodia. All 25 provinces with real-time weather, air quality, rain and lightning on the map, real NASA EONET storm tracks, and Khmer-first alerts."
-    />
+    <meta property="og:description" content="Live cyclone and weather monitor for Cambodia — all 25 provinces, real NASA EONET storm tracks, and Khmer-first alerts." />
     <meta property="og:image" content="https://strom-kh.netlify.app/strom.png" />
+    <meta property="og:image:secure_url" content="https://strom-kh.netlify.app/strom.png" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1901" />
     <meta property="og:image:height" content="927" />
-    <meta
-      property="og:image:alt"
-      content="StormWatch Kampuchea dashboard: a map of Cambodia with province markers, an active cyclone over the South China Sea, and per-province weather cards."
-    />
+    <meta property="og:image:alt" content="StormWatch Kampuchea dashboard: a map of Cambodia with province markers and an active cyclone." />
     <meta property="og:locale" content="en" />
     <meta property="og:locale:alternate" content="km_KH" />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="StormWatch Kampuchea · ប្រព័ន្ធតាមដានព្យុះ" />
-    <meta
-      name="twitter:description"
-      content="Live cyclone and weather monitor for Cambodia — 25 provinces, real NASA EONET storm tracks, Khmer-first alerts."
-    />
+    <meta name="twitter:description" content="Live cyclone and weather monitor for Cambodia — all 25 provinces, real NASA EONET storm tracks, and Khmer-first alerts." />
     <meta name="twitter:image" content="https://strom-kh.netlify.app/strom.png" />
-    <meta
-      name="twitter:image:alt"
-      content="StormWatch Kampuchea dashboard showing Cambodia's provinces and an active cyclone."
-    />
+    <meta name="twitter:image:alt" content="StormWatch Kampuchea dashboard showing Cambodia's provinces and an active cyclone." />
     <script>
       // Applies the saved theme before first paint so a dark-mode reload never
       // flashes the light palette. Light is the default when nothing is stored.
